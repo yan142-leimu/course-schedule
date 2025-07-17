@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>22周课程安排表系统 - 支持拖拽调整</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3498db">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            min-height: 100vh;
+            padding: 0;
+            color: #333;
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            max-width: 100vw;
+            width: 100%;
+            padding: 0 0 0 0;
+        }
+        
+        header {
+            background: linear-gradient(90deg, #2c3e50, #3498db);
+            color: white;
+            padding: 32px 40px 24px 40px;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            z-index: 0;
+            border-radius: 20px;
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 2;
+            flex-wrap: wrap;
+        }
+        
+        h1 {
+            font-size: 2.6rem;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.18);
+            background: linear-gradient(90deg, #fff, #e0f7fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0;
+        }
+        
+        .subtitle {
+            font-size: 1.18rem;
+            opacity: 0.92;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .week-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 10px 20px;
+            border-radius: 30px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .week-selector select {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 1.05rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .week-selector select:hover {
+            background: #34495e;
+            transform: translateY(-2px);
+        }
+        
+        .week-info {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-top: 10px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .week-box {
+            background: rgba(255, 255, 255, 0.13);
+            padding: 10px 28px;
+            border-radius: 30px;
+            font-weight: 500;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            font-size: 1.05rem;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .table-container {
+            width: 100%;
+            min-width: 320px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 18px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.13);
+            overflow: hidden;
+            padding: 32px 18px 24px 18px;
+            backdrop-filter: blur(10px);
+            border: 1.5px solid #e3e8ee;
+            margin: 0 auto;
+            max-width: 900px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.06);
+            background: #fff;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #2c3e50, #4a6491);
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            padding: 18px 10px;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            font-size: 1.08rem;
+        }
+        
+        th:last-child {
+            border-right: none;
+        }
+        
+        td {
+            padding: 16px 10px;
+            text-align: center;
+            border-bottom: 1px solid #eef2f7;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: grab;
+            font-size: 1.01rem;
+            min-width: 90px;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .time-header {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .time-cell {
+            background-color: #f0f9ff;
+            font-weight: 600;
+            color: #1a2a6c;
+            text-align: right;
+            padding-right: 30px;
+            position: relative;
+            border-right: 1px solid #e1e8f0;
+            cursor: default;
+            min-width: 80px;
+        }
+        
+        .time-cell::after {
+            content: "";
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background: #3498db;
+            border-radius: 50%;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .course-cell {
+            background-color: #f8f9fa;
+            font-weight: 500;
+            color: #2c3e50;
+            text-align: center;
+            padding: 16px 10px;
+            transition: all 0.3s ease;
+            cursor: move;
+            position: relative;
+            border: 1px solid #e0e6ed;
+            border-radius: 6px;
+        }
+        
+        .course-cell:hover {
+            background-color: #e3f2fd;
+            transform: scale(1.03);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.09);
+            z-index: 2;
+        }
+        
+        .highlight {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            font-weight: 600;
+            color: #0d47a1;
+            box-shadow: inset 0 0 10px rgba(33, 150, 243, 0.1);
+        }
+        
+        .completed {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            position: relative;
+        }
+        
+        .completed::after {
+            content: "✓";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 28px;
+            height: 28px;
+            background: #4caf50;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 3px 8px rgba(76, 175, 80, 0.3);
+        }
+        
+        .dragging {
+            opacity: 0.6;
+            transform: scale(0.98);
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.5);
+        }
+        
+        .drop-target {
+            background: linear-gradient(135deg, #fff9c4, #fff59d);
+            box-shadow: inset 0 0 0 3px #ffc107;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            padding: 25px 20px 15px;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            padding: 8px 18px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 30px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+        
+        .color-box {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+        }
+        
+        .completed-box {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+        }
+        
+        .course-box {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        }
+        
+        .actions {
+            display: flex;
+            justify-content: center;
+            padding: 10px 25px 15px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.18);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.08rem;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+        }
+        
+        button::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 20px;
+            height: 200%;
+            background: rgba(255,255,255,0.3);
+            transform: rotate(25deg);
+            transition: all 0.6s;
+        }
+        
+        button:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.22);
+        }
+        
+        button:hover::after {
+            left: 120%;
+        }
+        
+        .save-btn {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            box-shadow: 0 6px 15px rgba(39, 174, 96, 0.18);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 25px;
+            color: rgba(255,255,255,0.8);
+            font-size: 1rem;
+            margin-top: 32px;
+            background: rgba(0,0,0,0.18);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10);
+            backdrop-filter: blur(5px);
+            border: 1.5px solid rgba(255,255,255,0.10);
+            width: 100%;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 18px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.10);
+            padding: 32px 24px;
+            width: 340px;
+            backdrop-filter: blur(10px);
+            border: 1.5px solid #e3e8ee;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        
+        .instructions h2 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            text-align: center;
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+        
+        .instruction-list {
+            list-style: none;
+        }
+        
+        .instruction-list li {
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+            font-size: 1.01rem;
+        }
+        
+        .instruction-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .instruction-icon {
+            color: #3498db;
+            font-size: 1.4rem;
+            min-width: 30px;
+            background: rgba(52, 152, 219, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .drag-hint {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            font-weight: 500;
+            color: #0d47a1;
+            gap: 10px;
+            align-items: center;
+            font-size: 1.01rem;
+        }
+        
+        @media (max-width: 1100px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .instructions {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-top {
+                flex-direction: column;
+                gap: 18px;
+            }
+            
+            h1 {
+                font-size: 1.7rem;
+                text-align: center;
+            }
+            
+            .table-container {
+                padding: 12px 2vw 12px 2vw;
+            }
+            
+            th, td {
+                padding: 10px 4px;
+                font-size: 0.93rem;
+            }
+            
+            .time-cell {
+                padding-right: 12px;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            header {
+                padding: 12px 2vw;
+            }
+            
+            h1 {
+                font-size: 1.2rem;
+            }
+            
+            .subtitle {
+                font-size: 0.95rem;
+            }
+            
+            .week-box {
+                padding: 6px 10px;
+                font-size: 0.92rem;
+            }
+            
+            th, td {
+                padding: 7px 2px;
+                font-size: 0.82rem;
+            }
+            
+            .time-cell {
+                padding-right: 6px;
+            }
+            
+            .actions {
+                gap: 8px;
+            }
+            
+            button {
+                padding: 8px 12px;
+                font-size: 0.92rem;
+            }
+            .instructions {
+                padding: 10px 2px;
+            }
+        }
+        
+        .course-type-changshi { background: #ffe0b2 !important; }
+        .course-type-ziliao { background: #b2ebf2 !important; }
+        .course-type-shuliang { background: #dcedc8 !important; }
+        .course-type-shenlun { background: #f8bbd0 !important; }
+        .course-type-panduan { background: #e1bee7 !important; }
+        .course-type-yanyu { background: #fff9c4 !important; }
+        .course-type-zhengzhi { background: #b3e5fc !important; }
+        .course-type-tutui { background: #c8e6c9 !important; }
+        .course-type-leibi { background: #f0f4c3 !important; }
+        .course-type-luoji { background: #d1c4e9 !important; }
+        .course-type-kaiban { background: #ffe082 !important; }
+        .course-type-zongjie { background: #b2dfdb !important; }
+        .course-type-ceshi { background: #ffccbc !important; }
+        .course-type-jiangjie { background: #c5cae9 !important; }
+        .course-type-shuoti { background: #f0f4c3 !important; }
+        .course-type-pianduan { background: #f3e5f5 !important; }
+        .course-type-shuju { background: #e6ee9c !important; }
+        .course-type-xuanci { background: #ffe0e0 !important; }
+        .course-type-800ci { background: #e1f5fe !important; }
+        .course-type-sidebar {
+            width: 180px;
+            margin-right: 0;
+            background: rgba(255,255,255,0.97);
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+            padding: 24px 10px 24px 10px;
+            height: fit-content;
+            position: sticky;
+            top: 32px;
+            z-index: 10;
+            flex: none;
+            min-width: 140px;
+            border-right: 1.5px solid #e3e8ee;
+        }
+        .course-type-sidebar h3 {
+            font-size: 1.13rem;
+            margin-bottom: 18px;
+            text-align: center;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        #courseTypeList {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .course-type-draggable {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: 8px;
+            padding: 10px 0;
+            cursor: grab;
+            user-select: none;
+            border: 2px solid #eee;
+            transition: box-shadow 0.2s, background 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            background: #f7fafd;
+        }
+        .course-type-draggable:active {
+            box-shadow: 0 4px 16px rgba(52,152,219,0.18);
+        }
+        .main-flex-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .trash-area {
+            margin-top: 30px;
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px dashed #f5c6cb;
+            border-radius: 10px;
+            padding: 18px 0;
+            text-align: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            min-height: 48px;
+            user-select: none;
+        }
+        .trash-area.dragover {
+            background: #c82333;
+            color: #fff;
+            border-color: #c82333;
+        }
+        @media (max-width: 1100px) {
+            .container {
+                padding: 12px 2vw 0 2vw;
+            }
+            .course-type-sidebar {
+                width: 100%;
+                margin-bottom: 20px;
+                margin-right: 0;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: center;
+                min-width: 0;
+                border-right: none;
+                border-bottom: 1.5px solid #e3e8ee;
+            }
+            .main-flex-content {
+                width: 100%;
+            }
+        }
+        .main-flex-row {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+            width: 100%;
+            gap: 32px;
+        }
+        .main-flex-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .table-container {
+            margin: 0 auto;
+        }
+        header {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto 25px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .header-top, .subtitle, .week-info {
+            width: 100%;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+        }
+        .instructions {
+            width: 320px;
+            margin-left: 20px;
+            margin-right: 0;
+        }
+        @media (max-width: 1100px) {
+            .main-flex-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .instructions {
+                margin-left: 0;
+                margin-top: 20px;
+                width: 100%;
+            }
+            .main-flex-content {
+                width: 100%;
+            }
+        }
+
+        /* 课程类型栏多列展示 */
+        #courseTypeList {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        @media (min-width: 700px) {
+            #courseTypeList {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (max-width: 480px) {
+            #courseTypeList {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* 课程类型栏在小屏下宽度自适应 */
+        .course-type-sidebar {
+            min-width: 0;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 18px auto;
+            border-right: none;
+            border-bottom: 1.5px solid #e3e8ee;
+        }
+
+        /* 表格横向滚动优化 */
+        .table-scroll {
+            overflow-x: unset; /* 取消横向滚动 */
+            width: 100%;
+        }
+        table {
+            width: 100%;
+            min-width: 0;      /* 取消最小宽度限制 */
+            table-layout: fixed; /* 固定表格布局，单元格等宽 */
+        }
+        th, td {
+            min-width: 80px;
+            max-width: 160px;
+            min-height: 48px;
+            max-height: 72px;
+            padding: 10px 6px;
+            word-break: break-all; /* 内容自动换行 */
+            white-space: pre-line; /* 保留换行符并自动换行 */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        /* 移动端适配 */
+        @media (max-width: 600px) {
+            th, td {
+                min-width: 60px;
+                max-width: 100px;
+                min-height: 36px;
+                max-height: 56px;
+                padding: 6px 2px;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* 移动端适配整体布局 */
+        @media (max-width: 1100px) {
+            .main-flex-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            .course-type-sidebar,
+            .instructions {
+                max-width: 100vw;
+                width: 100%;
+                margin: 0 0 18px 0;
+                border-radius: 14px;
+            }
+            .table-container {
+                max-width: 100vw;
+                min-width: 0;
+                padding: 10px 2vw;
+            }
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 2vw;
+            }
+            .table-container {
+                padding: 6px 0;
+            }
+            .instructions {
+                padding: 10px 2vw;
+            }
+            .footer {
+                padding: 12px 2vw;
+            }
+        }
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 1vw;
+            }
+            .table-container {
+                padding: 2px 0;
+            }
+            .instructions {
+                padding: 6px 1vw;
+            }
+            .footer {
+                padding: 8px 1vw;
+            }
+            th, td {
+                font-size: 0.78rem;
+                padding: 5px 2px;
+            }
+        }
+        @media (max-width: 900px) {
+  .course-type-sidebar {
+    position: static !important;
+    top: unset !important;
+    z-index: auto !important;
+  }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <h1><i class="fas fa-calendar-alt"></i> 22周课程安排表系统</h1>
+                <div class="controls">
+                    <div class="week-selector">
+                        <span><i class="fas fa-calendar-week"></i> 选择周数：</span>
+                        <select id="weekSelector"></select>
+                        <span style="margin-left:16px;"><i class="fas fa-calendar-day"></i> 开始日期：</span>
+                        <input type="date" id="startDateInput" style="padding:6px 12px; border-radius:6px; border:1px solid #ccc;">
+                    </div>
+                </div>
+            </div>
+            <div class="subtitle">资料分析专项训练营 - 2025年7月21日 至 2025年12月14日</div>
+            <div class="week-info">
+                <div class="week-box"><i class="fas fa-calendar-check"></i> 当前周数：<span id="currentWeek">第1周</span></div>
+                <div class="week-box"><i class="fas fa-clock"></i> 日期范围：<span id="dateRange">2025-07-21 至 2025-07-27</span></div>
+                <div class="week-box"><i class="fas fa-book"></i> 总课时：24小时</div>
+            </div>
+        </header>
+        <div class="main-flex-row">
+            <div class="course-type-sidebar">
+                <h3>课程类型</h3>
+                <div id="courseTypeList"></div>
+                <div class="trash-area" id="trashArea">
+                    <i class="fas fa-trash-alt"></i> 拖到此处删除
+                </div>
+            </div>
+            <div class="main-flex-content">
+                <div class="table-container">
+                    <div class="drag-hint">
+                        <i class="fas fa-arrows-alt"></i> 提示：拖动课程单元格可以调整课程时间
+                    </div>
+                    <div class="table-scroll">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="time-header">时间/日期</th>
+                                </tr>
+                            </thead>
+                            <tbody id="courseTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="color-box completed-box"></div>
+                            <span>已完成的课程</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="color-box course-box"></div>
+                            <span>当日主要课程</span>
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="save-btn" onclick="saveData()">
+                            <i class="fas fa-save"></i> 保存数据
+                        </button>
+                        <button onclick="exportTable()">
+                            <i class="fas fa-file-export"></i> 导出课表
+                        </button>
+                        <button onclick="window.print()">
+                            <i class="fas fa-print"></i> 打印课表
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="instructions">
+                <h2><i class="fas fa-info-circle"></i> 使用说明</h2>
+                <ul class="instruction-list">
+                    <li>
+                        <div class="instruction-icon"><i class="fas fa-mouse-pointer"></i></div>
+                        <div>使用顶部下拉菜单切换不同周次，查看完整22周课程安排</div>
+                    </li>
+                    <li>
+                        <div class="instruction-icon"><i class="fas fa-arrows-alt"></i></div>
+                        <div>拖动课程单元格可以调整课程时间（拖放到新位置）</div>
+                    </li>
+                    <li>
+                        <div class="instruction-icon"><i class="fas fa-check-circle"></i></div>
+                        <div>点击课程单元格标记为已完成/未完成状态</div>
+                    </li>
+                    <li>
+                        <div class="instruction-icon"><i class="fas fa-save"></i></div>
+                        <div>点击"保存数据"按钮保存您的课程安排和完成状态</div>
+                    </li>
+                    <li>
+                        <div class="instruction-icon"><i class="fas fa-calendar-alt"></i></div>
+                        <div>日期范围自动计算，从2025-07-21开始</div>
+                    </li>
+                    <li>
+                        <div class="instruction-icon"><i class="fas fa-graduation-cap"></i></div>
+                        <div>共22周完整课程体系，至2025-12-14结束</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer">
+            <p>© 2025 公务员考试训练营 | 专业课程安排 | 如有调整请以最新通知为准</p>
+        </div>
+    </div>
+    
+    <script>
+        // 课程数据 - 根据提供的图片整理（包含补充的第4周和第5周）
+        const courseData = {
+            // 第1周
+            1: [
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["开班介绍", "资料分析1", "资料分析2", "资料分析3", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""]
+            ],
+            
+            // 第2周
+            2: [
+                ["", "", "", "", "", "", ""],
+                ["常识3", "", "常识4", "", "常识5", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["数量22讲1", "数量22讲2", "", "数量22讲3", "数量22讲4", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["资料分析4", "资料分析5", "资料分析6", "资料分析7", "申论1", "申论2", ""]
+            ],
+            
+            // 第3周
+            3: [
+                ["", "", "", "", "", "", ""],
+                ["常识6", "", "常识7", "", "常识8", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["数量22讲5", "数量22讲6", "", "资料刷题1", "资料刷题2", "", ""],
+                ["", "", "", "", "", "", "申论4"],
+                ["判断-逻辑1", "判断-逻辑2", "判断-逻辑3", "判断-逻辑4", "申论3", "", ""]
+            ],
+            
+            // 第4周（补充）
+            4: [
+                ["", "", "", "", "", "", ""],
+                ["常识9", "", "常识10", "", "常识11", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["资料刷题3", "资料刷题4", "", "资料刷题5", "资料刷题6", "", ""],
+                ["", "", "", "", "", "", "逻辑总结课"],
+                ["判断-逻辑5", "判断-逻辑6", "判断-逻辑7", "判断-逻辑8", "申论5", "申论6", ""]
+            ],
+            
+            // 第5周（补充）
+            5: [
+                ["", "", "", "", "", "", ""],
+                ["常识12", "", "常识13", "", "常识14", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["数量22讲7", "数量22讲8", "", "逻辑问题1", "逻辑问题2", "", ""],
+                ["", "", "", "", "", "", "申论8"],
+                ["判断-图推1", "判断-图推2", "判断-图推3", "判断-图推4", "申论7", "", ""]
+            ],
+            
+            // 第6周
+            6: [
+                ["", "", "", "", "", "", ""],
+                ["常识15", "", "常识16", "", "常识17", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["逻辑刷题3", "逻辑刷题4", "", "逻辑刷题5", "逻辑刷题6", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["判断-定义1", "判断-定义2", "判断-类比1", "判断-类比2", "申论9", "申论10", ""]
+            ],
+            
+            // 第7周
+            7: [
+                ["", "", "", "", "", "", ""],
+                ["常识18", "", "常识19", "", "常识20", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["数量22讲9", "数量22讲10", "", "类比刷题1", "类比刷题2", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["言语-片段阅读1", "言语-片段阅读2", "言语-片段阅读3", "言语-片段阅读4", "政治理论1", "政治理论2", ""]
+            ],
+            
+            // 第8周
+            8: [
+                ["", "", "", "", "", "", ""],
+                ["常识21", "", "常识22", "", "常识23", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["图推刷题1", "图推刷题2", "", "定义刷题1", "定义刷题2", "", ""],
+                ["", "", "", "", "", "片段阅读总结课", ""],
+                ["言语-片段阅读5", "言语-片段阅读6", "言语-片段阅读7", "政治理论3", "政治理论4", "政治理论5", ""]
+            ],
+            
+            // 第9周
+            9: [
+                ["常识24", "常识25", "常识26", "常识27", "政治理论7", "政治理论6", "政治理论7"],
+                ["片段例题1", "片段例题2", "片段例题3", "片段例题4", "片段例题5", "片段例题6", "片段例题7"],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""]
+            ],
+            
+            // 第10周
+            10: [
+                ["", "", "", "", "", "", ""],
+                ["常识28", "", "常识29", "", "常识30", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["片段剧题5", "片段剧题6", "", "数量22讲11", "数量22讲12", "", ""],
+                ["", "", "", "", "", "", "政治理论9"],
+                ["言语-800词1", "言语-800词2", "申论剧题3", "申论剧题4", "政治理论8", "", ""]
+            ],
+            
+            // 第11周
+            11: [
+                ["", "", "", "", "", "", ""],
+                ["常识31", "", "常识32", "", "常识33", "常识34", ""],
+                ["", "", "", "", "", "", ""],
+                ["数量22讲13", "数量22讲14", "", "数量22讲15", "数量22讲16", "", "政治理论11"],
+                ["", "", "", "", "", "", ""],
+                ["言语-800词3", "言语-800词4", "申论例题5", "申论例题6", "政治理论10", "", ""]
+            ],
+            
+            // 第12周
+            12: [
+                ["", "", "", "", "", "", ""],
+                ["常识35", "", "常识36", "", "常识37", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["数量22讲17", "数量22讲18", "", "数量22讲19", "数量22讲20", "", ""],
+                ["", "", "", "", "", "", "言语-800词8"],
+                ["言语-800词5", "言语-800词6", "申论例题7", "申论例题8", "言语-800词7", "", ""]
+            ],
+            
+            // 第13周
+            13: [
+                ["", "", "", "", "", "", ""],
+                ["常识38", "", "常识39", "", "常识40", "常识41", ""],
+                ["", "", "", "", "", "", ""],
+                ["数量22讲21", "数量22讲22", "", "选词刷题1", "选词刷题2", "", ""],
+                ["", "", "", "", "", "言语理解总结课", ""],
+                ["资料分析总结课", "判断推理总结课1", "判断推理总结课2", "数量总结课", "申论总结课", "数推基础", ""]
+            ],
+            
+            // 第14周 - 国庆周，课程较少
+            14: [
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["数据刷题", "数据刷题", "数据刷题", "数据刷题", "数据刷题", "数据刷题", "数据刷题"],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""]
+            ],
+            
+            // 第15周
+            15: [
+                ["行测1讲解（政治理论常识）", "行测2测试（9:00-11:00）", "行测3测试（9:00-11:00）", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["申论1测试", "行测1讲解（资料+判断）", "申论1讲解", "行测2讲解（资料+判断）", "申论2测试", "行测3讲解（资料+判断）", ""],
+                ["", "", "", "", "", "", ""],
+                ["开班介绍（18:00-18:30）", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""]
+            ],
+            
+            // 第16周
+            16: [
+                ["行测3讲解（政治理论常识）", "行测4讲解（政治理论常识）", "行测5讲解（政治理论常识）", "行测6讲解（政治理论常识）", "行测7讲解（政治理论常识）", "行测8讲解（政治理论常识）", ""],
+                ["行测4测试（9:00-11:00）", "行测5测试（9:00-11:00）", "行测6测试（9:00-11:00）", "行测7测试（9:00-11:00）", "行测8测试（9:00-11:00）", "行测9测试（9:00-11:00）", ""],
+                ["行测3讲解（言语+数量）", "申论3测试", "申论4测试", "申论5讲解（言语+数量）", "申论6讲解（言语+数量）", "申论7讲解（言语+数量）", ""],
+                ["行测4讲解（资料+判断）", "行测4讲解（资料+数量）", "行测5讲解（资料+判断）", "申论3讲解（资料+判断）", "申论4讲解（资料+数据）", "申论5讲解（资料+数据）", ""],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""]
+            ],
+            
+            // 第17周
+            17: [
+                ["行测7讲解（政治理论常识）", "行测8测试（9:00-11:00）", "行测9讲解（政治理论常识）", "行测9测试（9:00-11:00）", "行测9讲解（政治理论常识）", "行测10测试（9:00-11:00）", ""],
+                ["行测7测试（9:00-11:00）", "行测8测试（9:00-11:00）", "行测9测试（9:00-11:00）", "行测10测试（9:00-11:00）", "行测9讲解（言语+数量）", "行测10讲解（资料+判断）", ""],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""]
+            ],
+            
+            // 第19周
+            19: [
+                ["行测1讲解（政治理论常识）", "行测2测试（9:00-11:00）", "行测3测试（9:00-11:00）", "行测4测试（9:00-11:00）", "行测5测试（9:00-11:00）", "行测6测试（9:00-11:00）", ""],
+                ["行测1测试（9:00-11:00）", "行测2测试（9:00-11:00）", "行测3测试（9:00-11:00）", "行测4测试（9:00-11:00）", "行测5测试（9:00-11:00）", "行测6测试（9:00-11:00）", ""],
+                ["行测1讲解（言语+数量）", "行测2讲解（资料+判断）", "行测3讲解（资料+判断）", "行测4讲解（资料+判断）", "", "", ""],
+                ["行测1讲解（资料+判断）", "行测2讲解（资料+判断）", "行测3讲解（资料+判断）", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""]
+            ],
+            
+            // 第20周
+            20: [
+                ["行测4讲解（政治理论常识）", "行测5讲解（政治理论常识）", "行测6讲解（政治理论常识）", "行测7讲解（政治理论常识）", "行测8讲解（政治理论常识）", "行测9讲解（政治理论常识）", "行测10讲解（政治理论常识）"],
+                ["行测5测试（9:00-11:00）", "行测6测试（9:00-11:00）", "行测7测试（9:00-11:00）", "行测8测试（9:00-11:00）", "行测9测试（9:00-11:00）", "行测10测试（9:00-11:00）", ""],
+                ["", "", "", "", "", "", ""],
+                ["申论3测试", "行测5讲解（言语+数量）", "申论4测试", "行测7讲解（言语+数量）", "申论4测试", "行测7讲解（言语+数量）", "申论4测试"],
+                ["行测4讲解（言语+数量）", "行测5讲解（资料+判断）", "申论3讲解", "行测6讲解（资料+判断）", "行测6讲解（言语+数量）", "行测7讲解（资料+判断）", "申论4讲解"],
+                ["", "", "", "", "", "", ""]
+            ],
+            
+            // 第21周
+            21: [
+                ["", "行测8讲解（政治理论常识）", "", "行测9讲解（政治理论常识）", "", "行测10讲解（政治理论常识）", ""],
+                ["行测8测试（9:00-11:00）", "", "行测9测试（9:00-11:00）", "", "行测10测试（9:00-11:00）", "", "行测11测试（9:00-11:00）"],
+                ["", "", "", "", "", "", ""],
+                ["", "申论5测试", "", "行测9讲解（言语+数量）", "", "申论6测试", ""],
+                ["行测8讲解（资料+判断）", "行测8讲解（言语+数量）", "行测9讲解（资料+判断）", "申论5讲解", "行测10讲解（资料+判断）", "行测10讲解（言语+数量）", "行测11讲解（资料+判断）"],
+                ["", "", "", "", "", "", ""]
+            ],
+            
+            // 第22周
+            22: [
+                ["行测11讲解（政治理论常识）", "", "行测12讲解（政治理论常识）", "", "", "", ""],
+                ["", "行测12测试（9:00-11:00）", "行测12讲解（言语+数量）", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["行测11讲解（言语+数量）", "", "", "", "", "", ""],
+                ["申论6讲解", "行测12讲解（资料+判断）", "", "申论总结", "行测总结+考前心理疏导", "", ""],
+                ["", "", "", "", "", "", ""]
+            ]
+        };
+
+        // 全局变量
+        let startDate = getSavedStartDate(); // 先初始化
+        const totalWeeks = 22;
+        let currentWeek = 1;
+        let completedData = {};
+        let draggedCell = null;
+        let isDragging = false; // 新增拖拽标志
+        let justDragged = false; // 新增刚刚拖拽过标志
+        
+        // 课程类型与颜色class映射
+        const courseTypeColors = [
+            { keyword: '常识', className: 'course-type-changshi' },
+            { keyword: '资料分析', className: 'course-type-ziliao' },
+            { keyword: '数量', className: 'course-type-shuliang' },
+            { keyword: '申论', className: 'course-type-shenlun' },
+            { keyword: '判断', className: 'course-type-panduan' },
+            { keyword: '言语', className: 'course-type-yanyu' },
+            { keyword: '政治理论', className: 'course-type-zhengzhi' },
+            { keyword: '图推', className: 'course-type-tutui' },
+            { keyword: '类比', className: 'course-type-leibi' },
+            { keyword: '逻辑', className: 'course-type-luoji' },
+            { keyword: '开班', className: 'course-type-kaiban' },
+            { keyword: '总结', className: 'course-type-zongjie' },
+            { keyword: '测试', className: 'course-type-ceshi' },
+            { keyword: '讲解', className: 'course-type-jiangjie' },
+            { keyword: '刷题', className: 'course-type-shuoti' },
+            { keyword: '片段', className: 'course-type-pianduan' },
+            { keyword: '数据', className: 'course-type-shuju' },
+            { keyword: '选词', className: 'course-type-xuanci' },
+            { keyword: '800词', className: 'course-type-800ci' },
+        ];
+        
+        // 初始化函数
+        function init() {
+            generateWeekOptions();
+            generateTableForWeek(currentWeek);
+            loadSavedData();
+            setupDragAndDrop();
+        }
+        
+        // 生成周数选择器选项
+        function generateWeekOptions() {
+            const weekSelector = document.getElementById('weekSelector');
+            for (let i = 1; i <= totalWeeks; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `第${i}周`;
+                weekSelector.appendChild(option);
+            }
+            
+            // 添加周数切换事件
+            weekSelector.addEventListener('change', function() {
+                currentWeek = parseInt(this.value);
+                generateTableForWeek(currentWeek);
+                updateWeekInfo();
+            });
+        }
+        
+        // 更新周信息
+        function updateWeekInfo() {
+            document.getElementById('currentWeek').textContent = `第${currentWeek}周`;
+            document.getElementById('dateRange').textContent = getDateRangeForWeek(currentWeek);
+        }
+        
+        // 获取指定周的日期范围
+        function getDateRangeForWeek(week) {
+            const start = new Date(startDate);
+            start.setDate(start.getDate() + (week - 1) * 7);
+            
+            const end = new Date(start);
+            end.setDate(end.getDate() + 6);
+            
+            return `${formatDate(start)} 至 ${formatDate(end)}`;
+        }
+        
+        // 格式化日期为YYYY-MM-DD
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // 生成指定周的课程表
+        function generateTableForWeek(week) {
+            const tableHead = document.querySelector('thead tr');
+            const tableBody = document.getElementById('courseTableBody');
+            
+            // 清空表头（保留时间列）
+            while (tableHead.children.length > 1) {
+                tableHead.removeChild(tableHead.lastChild);
+            }
+            
+            // 清空表格内容
+            tableBody.innerHTML = '';
+            
+            // 生成表头（日期）
+            const weekStart = new Date(startDate);
+            weekStart.setDate(weekStart.getDate() + (week - 1) * 7);
+            
+            const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(weekStart);
+                date.setDate(date.getDate() + i);
+                
+                const th = document.createElement('th');
+                
+                const dayName = dayNames[date.getDay()];
+                const dayNumber = date.getDate();
+                const month = date.getMonth() + 1;
+                
+                th.innerHTML = `${month}月${dayNumber}日<br><small>${dayName}</small>`;
+                tableHead.appendChild(th);
+            }
+            
+            // 生成表格内容
+            const timeBlocks = [
+                '7:00-7:30', '7:30-8:30', '9:00-11:00', 
+                '12:00-13:00', '14:00-17:00', '19:10-22:00'
+            ];
+            
+            // 获取当前周的课程数据（如果不存在则使用空数组）
+            const weekCourses = courseData[week] || [
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""],
+                ["", "", "", "", "", "", ""]
+            ];
+            
+            // 生成行
+            timeBlocks.forEach((time, rowIndex) => {
+                const row = document.createElement('tr');
+                
+                // 时间单元格
+                const timeCell = document.createElement('td');
+                timeCell.className = 'time-cell';
+                timeCell.textContent = time;
+                row.appendChild(timeCell);
+                
+                // 课程单元格
+                for (let day = 0; day < 7; day++) {
+                    let course = weekCourses[rowIndex][day] || "";
+                    course = stripCourseNumber(course);
+                    const td = document.createElement('td');
+                    td.className = 'course-cell';
+                    td.textContent = course;
+                    td.setAttribute('draggable', 'true');
+                    td.setAttribute('data-week', week);
+                    td.setAttribute('data-row', rowIndex);
+                    td.setAttribute('data-day', day);
+                    // 课程类型着色
+                    for (const type of courseTypeColors) {
+                        if (course.includes(type.keyword)) {
+                            td.classList.add(type.className);
+                            break;
+                        }
+                    }
+                    // 检查是否已完成
+                    const cellId = `w${week}-r${rowIndex}-d${day}`;
+                    if (completedData[cellId]) {
+                        td.classList.add('completed');
+                    }
+                    // 添加点击事件来标记完成状态
+                    td.addEventListener('click', function(e) {
+                        if (this.hasAttribute('data-dragging')) return; // 拖拽时不切换
+                        if (!isDragging) {
+                            this.classList.toggle('completed');
+                            completedData[cellId] = this.classList.contains('completed');
+                        }
+                    });
+                    // 拖拽删除支持
+                    td.addEventListener('dragstart', function(e) {
+                        window._draggedCellForDelete = this;
+                    });
+                    td.addEventListener('dragend', function(e) {
+                        setTimeout(() => { window._draggedCellForDelete = null; }, 100);
+                    });
+                    row.appendChild(td);
+                }
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // 设置拖拽功能
+        function setupDragAndDrop() {
+            document.addEventListener('dragstart', function(e) {
+                if (e.target.classList.contains('course-cell')) {
+                    draggedCell = e.target;
+                    isDragging = true; // 拖拽开始
+                    e.target.setAttribute('data-dragging', '1');
+                    e.target.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', e.target.textContent);
+                }
+            });
+            
+            document.addEventListener('dragover', function(e) {
+                if (e.target.classList.contains('course-cell')) {
+                    e.preventDefault();
+                    e.target.classList.add('drop-target');
+                }
+                // 支持拖到页面空白处删除
+                if (window._draggedCellForDelete && !e.target.classList.contains('course-cell') && !e.target.classList.contains('course-type-draggable') && !e.target.closest('.course-type-sidebar')) {
+                    e.preventDefault();
+                }
+            });
+            
+            document.addEventListener('dragleave', function(e) {
+                if (e.target.classList.contains('course-cell')) {
+                    e.target.classList.remove('drop-target');
+                }
+            });
+            
+            document.addEventListener('drop', function(e) {
+                e.preventDefault();
+                if (e.target.classList.contains('course-cell')) {
+                    const type = e.dataTransfer.getData('text/plain');
+                    if (type) {
+                        // 记录原单元格
+                        const sourceCell = draggedCell;
+                        // 目标单元格赋值
+                        e.target.textContent = type;
+                        // 着色
+                        for (const t of courseTypeColors) {
+                            if (type === t.keyword) {
+                                e.target.classList.add(t.className);
+                            } else {
+                                e.target.classList.remove(t.className);
+                            }
+                        }
+                        // 同步到数据
+                        const w = parseInt(e.target.getAttribute('data-week'));
+                        const r = parseInt(e.target.getAttribute('data-row'));
+                        const d = parseInt(e.target.getAttribute('data-day'));
+                        if (courseData[w] && courseData[w][r]) {
+                            courseData[w][r][d] = type;
+                        }
+                        // 清空原单元格（如果不是同一个单元格）
+                        if (sourceCell && sourceCell !== e.target) {
+                            clearCourseCell(sourceCell);
+                        }
+                    }
+                }
+                // 拖到类型栏或页面空白处删除
+                if (window._draggedCellForDelete && (!e.target.classList.contains('course-cell') && !e.target.classList.contains('course-type-draggable') && !e.target.closest('.course-type-sidebar'))) {
+                    clearCourseCell(window._draggedCellForDelete);
+                    window._draggedCellForDelete = null;
+                }
+                if (draggedCell) draggedCell.removeAttribute('data-dragging');
+                justDragged = true;
+                setTimeout(() => { justDragged = false; }, 0);
+            });
+        }
+        
+        // 保存所有数据
+        function saveData() {
+            localStorage.setItem('courseScheduleData', JSON.stringify({
+                courses: courseData,
+                completed: completedData
+            }));
+            alert('课程安排和完成状态已成功保存！');
+        }
+        
+        // 加载保存的数据
+        function loadSavedData() {
+            const savedData = localStorage.getItem('courseScheduleData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                if (data.courses) {
+                    // 更新课程数据
+                    for (let week in data.courses) {
+                        if (data.courses.hasOwnProperty(week)) {
+                            courseData[week] = data.courses[week];
+                        }
+                    }
+                }
+                if (data.completed) {
+                    completedData = data.completed;
+                }
+            }
+        }
+        
+        // 导出表格功能
+        function exportTable() {
+            alert('导出功能：在实际应用中，这里会导出当前周课程表');
+        }
+        
+        // 去除课程名数字后缀
+        function stripCourseNumber(name) {
+            return name.replace(/(\d+|[（(][^）)]*[）)])$/g, '').replace(/\s+$/, '');
+        }
+        
+        // 生成课程类型侧边栏
+        function renderCourseTypeSidebar() {
+            const list = document.getElementById('courseTypeList');
+            list.innerHTML = '';
+            courseTypeColors.forEach(type => {
+                const div = document.createElement('div');
+                div.className = `course-type-draggable ${type.className}`;
+                div.textContent = type.keyword;
+                div.setAttribute('draggable', 'true');
+                div.setAttribute('data-type', type.keyword);
+                // 拖拽事件
+                div.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', type.keyword);
+                });
+                list.appendChild(div);
+            });
+            // 回收站拖拽事件
+            const trash = document.getElementById('trashArea');
+            trash.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                trash.classList.add('dragover');
+            });
+            trash.addEventListener('dragleave', function(e) {
+                trash.classList.remove('dragover');
+            });
+            trash.addEventListener('drop', function(e) {
+                e.preventDefault();
+                trash.classList.remove('dragover');
+                if (window._draggedCellForDelete) {
+                    clearCourseCell(window._draggedCellForDelete);
+                    window._draggedCellForDelete = null;
+                }
+            });
+        }
+        
+        // 清空单元格内容和颜色
+        function clearCourseCell(td) {
+            td.textContent = '';
+            for (const type of courseTypeColors) {
+                td.classList.remove(type.className);
+            }
+            td.classList.remove('completed'); // 移除已完成样式
+            // 同步到数据
+            const w = parseInt(td.getAttribute('data-week'));
+            const r = parseInt(td.getAttribute('data-row'));
+            const d = parseInt(td.getAttribute('data-day'));
+            if (courseData[w] && courseData[w][r]) {
+                courseData[w][r][d] = '';
+            }
+        }
+        
+        // 初始化开始日期选择器
+        function initStartDateInput() {
+            const input = document.getElementById('startDateInput');
+            // 先设置日期选择器的值
+            input.value = formatDateInput(startDate);
+            input.addEventListener('change', function() {
+                startDate = new Date(this.value);
+                localStorage.setItem('courseScheduleStartDate', this.value);
+                generateTableForWeek(currentWeek);
+                updateWeekInfo();
+            });
+        }
+
+        function formatDateInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getSavedStartDate() {
+            const saved = localStorage.getItem('courseScheduleStartDate');
+            return saved ? new Date(saved) : new Date(2025, 6, 21);
+        }
+        
+        // 初始化页面
+        window.onload = function() {
+            renderCourseTypeSidebar();
+            // 先设置日期选择器的值
+            const input = document.getElementById('startDateInput');
+            input.value = formatDateInput(startDate);
+            input.addEventListener('change', function() {
+                startDate = new Date(this.value);
+                localStorage.setItem('courseScheduleStartDate', this.value);
+                generateTableForWeek(currentWeek);
+                updateWeekInfo();
+            });
+            // 再初始化主内容
+            init();
+        };
+    </script>
+    <script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').then(function(registration) {
+      // 注册成功
+      // console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    }, function(err) {
+      // 注册失败
+      // console.log('ServiceWorker registration failed: ', err);
+    });
+  });
+}
+</script>
+</body>
+</html>
